@@ -5,7 +5,13 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import "./tailwind.css";
+import type { LinksFunction } from "@remix-run/node";
+import stylesheet from "./globals.css?url";
+import { Button } from "./components/ui/button";
+
+export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: stylesheet },
+];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +24,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Button>Click me</Button>
         <ScrollRestoration />
         <Scripts />
       </body>

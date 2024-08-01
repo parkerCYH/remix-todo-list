@@ -1,3 +1,4 @@
+import type { LinksFunction } from "@remix-run/node";
 import {
   Links,
   Meta,
@@ -5,9 +6,8 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
+import { SiteNav } from "./components/nav";
 import stylesheet from "./globals.css?url";
-import { Button } from "./components/ui/button";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -23,8 +23,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <header>
+          <div className="flex items-center p-9 md:gap-16">
+            <span className="text-xl font-bold sm:text-3xl">
+              Remix Todo List
+            </span>
+            <SiteNav />
+          </div>
+        </header>
         {children}
-        <Button>Click me</Button>
         <ScrollRestoration />
         <Scripts />
       </body>

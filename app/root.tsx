@@ -1,12 +1,13 @@
 import type { LinksFunction } from "@remix-run/node";
 import {
+  Link,
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import { SiteNav } from "./components/nav";
+import { NavigationMenuDemo } from "./components/nav";
 import stylesheet from "./globals.css?url";
 
 export const links: LinksFunction = () => [
@@ -25,10 +26,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <header>
           <div className="flex items-center p-9 md:gap-16">
-            <span className="text-xl font-bold sm:text-3xl">
+            <Link className="text-xl font-bold sm:text-3xl" to="/">
               Remix Todo List
-            </span>
-            <SiteNav />
+            </Link>
+            <NavigationMenuDemo />
           </div>
         </header>
         {children}

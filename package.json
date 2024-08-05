@@ -28,8 +28,8 @@
     "tailwindcss-animate": "1.0.7"
   },
   "devDependencies": {
-    "@remix-run/dev": "2.11.0",
-    "@remix-run/eslint-config": "2.11.0",
+    "@remix-run/dev": "2.10.3",
+    "@remix-run/eslint-config": "2.10.3",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "autoprefixer": "10.4.19",

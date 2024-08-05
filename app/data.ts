@@ -34,18 +34,18 @@ const fakeTodos = {
     return newContact;
   },
 
-  //   async set(id: string, values: TodoMutation): Promise<Todo> {
-  //     const contact = await fakeTodos.get(id);
-  //     invariant(contact, `No contact found for ${id}`);
-  //     const updatedContact = { ...contact, ...values };
-  //     fakeTodos.records[id] = updatedContact;
-  //     return updatedContact;
-  //   },
+  async set(id: string, values: TodoMutation): Promise<TodoRecord | null> {
+    const todo = await fakeTodos.get(id);
+    if (!todo) return null;
+    const updatedContact = { ...todo, ...values };
+    fakeTodos.records[id] = updatedContact;
+    return updatedContact;
+  },
 
   destroy(id: string): null {
     delete fakeTodos.records[id];
     return null;
-  },
+  }
 };
 
 export const createTodo = async (data: TodoMutation) => {
@@ -63,4 +63,9 @@ export const getTodos = async () => {
   let todos = await fakeTodos.getAll();
 
   return todos;
+};
+
+export const updateTodo = async (id: string, data: TodoMutation) => {
+  const todo = await fakeTodos.set(id, data);
+  return todo;
 };

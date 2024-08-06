@@ -22,6 +22,7 @@ module.exports = {
     ],
     'react/react-in-jsx-scope': 'off',
     '@typescript-eslint/no-use-before-define': 'off',
+    '@typescript-eslint/consistent-type-imports': 'error',
     'arrow-parens': ['error', 'always']
   }
 };

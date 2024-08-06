@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -95,19 +96,7 @@ const TableDemo = ({ todos }: { todos: TodoRecord[] }) => (
     </TableHeader>
     <TableBody>
       {todos.map((todo) => (
-        <TableRow key={todo.id}>
-          <TableCell className="cursor-pointer">
-            <TodoRow todo={todo} />
-          </TableCell>
-          <TableCell className="text-right">
-            <Form method="post">
-              <input type="hidden" name="id" value={todo.id} />
-              <Button type="submit" name="intent" value={INTENT_DELETE_TASK}>
-                Delete
-              </Button>
-            </Form>
-          </TableCell>
-        </TableRow>
+        <TodoRow todo={todo} key={todo.id} />
       ))}
     </TableBody>
   </Table>
@@ -115,35 +104,51 @@ const TableDemo = ({ todos }: { todos: TodoRecord[] }) => (
 
 const TodoRow: FunctionComponent<{
   todo: TodoRecord;
-}> = ({ todo }) => {
+  key: string;
+}> = ({ todo, key }) => {
   const fetcher = useFetcher();
   const completed = fetcher.formData
     ? fetcher.formData.get('completed') === 'true'
     : todo.completed;
   const { id, createdAt, text } = todo;
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <fetcher.Form method="post">
-            <button
-              type="submit"
-              name="intent"
-              value={INTENT_UPDATE_TASK}
-              className="h-full w-full"
-            >
-              <input type="hidden" name="id" value={id} />
-              <input type="hidden" name="completed" value={completed ? 'false' : 'true'} />
-              <span className={clsx(completed && 'line-through')}>{text}</span>
-            </button>
-          </fetcher.Form>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{new Date(createdAt).toLocaleString()}</p>
-          <p>{completed ? 'Remove from completed' : 'Add to completed'}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <TableRow key={key} data-state={todo.completed && 'selected'}>
+      <TableCell>
+        <Checkbox checked={completed} />
+      </TableCell>
+      <TableCell className="cursor-pointer">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <fetcher.Form method="post">
+                <button
+                  type="submit"
+                  name="intent"
+                  value={INTENT_UPDATE_TASK}
+                  className="h-full w-full"
+                >
+                  <input type="hidden" name="id" value={id} />
+                  <input type="hidden" name="completed" value={completed ? 'false' : 'true'} />
+                  <span className={clsx(completed && 'line-through')}>{text}</span>
+                </button>
+              </fetcher.Form>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{new Date(createdAt).toLocaleString()}</p>
+              <p>{completed ? 'Remove from completed' : 'Add to completed'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
+      <TableCell className="text-right">
+        <Form method="post">
+          <input type="hidden" name="id" value={todo.id} />
+          <Button type="submit" name="intent" value={INTENT_DELETE_TASK}>
+            Delete
+          </Button>
+        </Form>
+      </TableCell>
+    </TableRow>
   );
 };
 

@@ -48,12 +48,22 @@ const fakeTodos = {
   }
 };
 
-export const createTodo = async (data: TodoMutation) => {
-  const todo = await fakeTodos.create(data);
+export const createTodo = async (formData: FormData) => {
+  const text = formData.get('text');
+  if (typeof text !== 'string') {
+    throw new Response('Invalid text', { status: 400 });
+  }
+
+  const todo = await fakeTodos.create({ text });
   return todo;
 };
 
-export const deleteTodo = async (id: string) => {
+export const deleteTodo = async (formData: FormData) => {
+  const id = formData.get('id');
+  if (typeof id !== 'string') {
+    throw new Response('Invalid text', { status: 400 });
+  }
+
   fakeTodos.destroy(id);
 };
 
@@ -65,7 +75,18 @@ export const getTodos = async () => {
   return todos;
 };
 
-export const updateTodo = async (id: string, data: TodoMutation) => {
-  const todo = await fakeTodos.set(id, data);
+export const updateTodo = async (formData: FormData) => {
+  const id = formData.get('id');
+  const completed = formData.get('completed');
+  if (typeof id !== 'string') {
+    throw new Response('Invalid text', { status: 400 });
+  }
+  if (typeof completed !== 'string') {
+    throw new Response('Invalid text', { status: 400 });
+  }
+
+  const todo = await fakeTodos.set(id, {
+    completed: completed === 'true'
+  });
   return todo;
 };

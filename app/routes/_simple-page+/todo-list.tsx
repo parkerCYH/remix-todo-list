@@ -1,8 +1,3 @@
-import { json, redirect } from '@remix-run/node';
-import { useLoaderData, Form, useNavigation } from '@remix-run/react';
-import { Plus } from 'lucide-react';
-import type { MetaFunction, LoaderFunction, ActionFunction } from '@remix-run/node';
-import clsx from 'clsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,7 +10,14 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { TodoRecord } from '@/data';
 import { createTodo, deleteTodo, getTodos, updateTodo } from '@/data';
+import type { ActionFunction, LoaderFunction, MetaFunction } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { Form, redirect, useFetcher, useLoaderData, useNavigation } from '@remix-run/react';
+import clsx from 'clsx';
+import { Plus } from 'lucide-react';
+import type { FunctionComponent } from 'react';
 
 export const meta: MetaFunction = () => [
   { title: 'Todo List | Remix Todo List' },
@@ -25,13 +27,6 @@ export const meta: MetaFunction = () => [
   }
 ];
 
-type Todo = {
-  id: string;
-  text: string;
-  completed: boolean;
-  createAt: number;
-};
-
 export const loader: LoaderFunction = async () => {
   const todos = await getTodos();
   if (!todos) {
@@ -40,36 +35,45 @@ export const loader: LoaderFunction = async () => {
   return json({ todos });
 };
 
+const INTENT_ADD_TASK = 'add';
+const INTENT_DELETE_TASK = 'delete';
+const INTENT_UPDATE_TASK = 'update';
+
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
-  const actionType = formData.get('_action');
-  const id = formData.get('id') as string;
+  const intent = formData.get('intent');
 
-  if (actionType === 'add') {
-    const text = formData.get('text') as string;
-    if (text.trim() === '') return null;
-    createTodo({
-      text
-    });
-  } else if (actionType === 'toggle') {
-    updateTodo(id, { completed: true });
-  } else if (actionType === 'delete') {
-    deleteTodo(id);
+  switch (intent) {
+    case INTENT_ADD_TASK: {
+      return createTodo(formData);
+    }
+    case INTENT_UPDATE_TASK: {
+      return updateTodo(formData);
+    }
+    case INTENT_DELETE_TASK: {
+      await deleteTodo(formData);
+      return redirect('/todo-list');
+    }
+    default: {
+      throw new Response(`Invalid intent "${intent}"`, { status: 400 });
+    }
   }
-
-  return redirect('/todo-list');
 };
 
 const TodoList = () => {
   const { todos } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
-  const isAdding = navigation.formData?.get('_action') === 'add';
 
   return (
     <div className="p-4 font-sans">
       <Form method="post" className="flex w-full max-w-sm items-center space-x-2">
         <Input type="text" name="text" placeholder="Add a new task" />
-        <Button type="submit" name="_action" value="add" disabled={isAdding}>
+        <Button
+          type="submit"
+          name="intent"
+          value={INTENT_ADD_TASK}
+          disabled={navigation.state === 'loading'}
+        >
           <Plus className="mr-2" />
           Add
         </Button>
@@ -81,7 +85,7 @@ const TodoList = () => {
   );
 };
 
-const TableDemo = ({ todos }: { todos: Todo[] }) => (
+const TableDemo = ({ todos }: { todos: TodoRecord[] }) => (
   <Table>
     <TableCaption>A list of your recent todos.</TableCaption>
     <TableHeader>
@@ -90,29 +94,15 @@ const TableDemo = ({ todos }: { todos: Todo[] }) => (
       </TableRow>
     </TableHeader>
     <TableBody>
-      {todos.map(({ id, text, completed, createAt }) => (
-        <TableRow key={id}>
+      {todos.map((todo) => (
+        <TableRow key={todo.id}>
           <TableCell className="cursor-pointer">
-            <Form method="post">
-              <input type="hidden" name="id" value={id} />
-              <button type="submit" name="_action" value="toggle">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className={clsx(completed && 'line-through')}>{text}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{new Date(createAt).toLocaleString()}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </button>
-            </Form>
+            <TodoRow todo={todo} />
           </TableCell>
           <TableCell className="text-right">
             <Form method="post">
-              <input type="hidden" name="id" value={id} />
-              <Button type="submit" name="_action" value="delete" className="ml-2 text-red-500">
+              <input type="hidden" name="id" value={todo.id} />
+              <Button type="submit" name="intent" value={INTENT_DELETE_TASK}>
                 Delete
               </Button>
             </Form>
@@ -122,5 +112,39 @@ const TableDemo = ({ todos }: { todos: Todo[] }) => (
     </TableBody>
   </Table>
 );
+
+const TodoRow: FunctionComponent<{
+  todo: TodoRecord;
+}> = ({ todo }) => {
+  const fetcher = useFetcher();
+  const completed = fetcher.formData
+    ? fetcher.formData.get('completed') === 'true'
+    : todo.completed;
+  const { id, createdAt, text } = todo;
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <fetcher.Form method="post">
+            <button
+              type="submit"
+              name="intent"
+              value={INTENT_UPDATE_TASK}
+              className="h-full w-full"
+            >
+              <input type="hidden" name="id" value={id} />
+              <input type="hidden" name="completed" value={completed ? 'false' : 'true'} />
+              <span className={clsx(completed && 'line-through')}>{text}</span>
+            </button>
+          </fetcher.Form>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{new Date(createdAt).toLocaleString()}</p>
+          <p>{completed ? 'Remove from completed' : 'Add to completed'}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 export default TodoList;

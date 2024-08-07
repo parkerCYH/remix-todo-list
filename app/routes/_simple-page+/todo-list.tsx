@@ -113,7 +113,6 @@ const TodoRow: FunctionComponent<{
   return (
     <TableRow key={key} data-state={todo.completed && 'selected'}>
       <TableCell>
-        <Checkbox checked={completed} />
         <fetcher.Form method="post">
           <button type="submit" name="intent" value={INTENT_UPDATE_TASK}>
             <input type="hidden" name="id" value={id} />

@@ -16,7 +16,6 @@ import { createTodo, deleteTodo, getTodos, updateTodo } from '@/data';
 import type { ActionFunction, LoaderFunction, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Form, redirect, useFetcher, useLoaderData, useNavigation } from '@remix-run/react';
-import clsx from 'clsx';
 import { Plus } from 'lucide-react';
 import type { FunctionComponent } from 'react';
 
@@ -115,35 +114,31 @@ const TodoRow: FunctionComponent<{
     <TableRow key={key} data-state={todo.completed && 'selected'}>
       <TableCell>
         <Checkbox checked={completed} />
+        <fetcher.Form method="post">
+          <button type="submit" name="intent" value={INTENT_UPDATE_TASK}>
+            <input type="hidden" name="id" value={id} />
+            <input type="hidden" name="completed" value={completed ? 'false' : 'true'} />
+            <Checkbox className="cursor-pointer" checked={completed} />
+          </button>
+        </fetcher.Form>
       </TableCell>
-      <TableCell className="cursor-pointer">
+      <TableCell>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <fetcher.Form method="post">
-                <button
-                  type="submit"
-                  name="intent"
-                  value={INTENT_UPDATE_TASK}
-                  className="h-full w-full"
-                >
-                  <input type="hidden" name="id" value={id} />
-                  <input type="hidden" name="completed" value={completed ? 'false' : 'true'} />
-                  <span className={clsx(completed && 'line-through')}>{text}</span>
-                </button>
-              </fetcher.Form>
+              <span>{text}</span>
             </TooltipTrigger>
             <TooltipContent>
               <p>{new Date(createdAt).toLocaleString()}</p>
-              <p>{completed ? 'Remove from completed' : 'Add to completed'}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </TableCell>
+
       <TableCell className="text-right">
         <Form method="post">
           <input type="hidden" name="id" value={todo.id} />
-          <Button type="submit" name="intent" value={INTENT_DELETE_TASK}>
+          <Button variant="link" type="submit" name="intent" value={INTENT_DELETE_TASK}>
             Delete
           </Button>
         </Form>

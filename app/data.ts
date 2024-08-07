@@ -12,14 +12,11 @@ export type TodoRecord = TodoMutation & {
 const fakeTodos = {
   records: {} as Record<string, TodoRecord>,
   async getAll(): Promise<TodoRecord[]> {
-    const keys = Object.keys(fakeTodos.records);
-
-    const a = keys.reduce<TodoRecord[]>((acc, todoKey) => {
+    return Object.keys(fakeTodos.records).reduce<TodoRecord[]>((acc, todoKey) => {
       const s = fakeTodos.records[todoKey];
       if (s) acc.push(s);
       return acc;
     }, []);
-    return a;
   },
 
   async get(id: string): Promise<TodoRecord | null> {
@@ -90,3 +87,21 @@ export const updateTodo = async (formData: FormData) => {
   });
   return todo;
 };
+
+const MockData: Required<TodoRecord>[] = [
+  { id: '1', text: 'Feed the cat 🐱', createdAt: new Date().toISOString(), completed: true },
+  { id: '2', text: 'Water the plants 🌱', createdAt: new Date().toISOString(), completed: false },
+  { id: '3', text: 'Read a book 📚', createdAt: new Date().toISOString(), completed: true },
+  { id: '4', text: 'Go for a walk 🚶‍♂️', createdAt: new Date().toISOString(), completed: false },
+  { id: '5', text: 'Bake cookies 🍪', createdAt: new Date().toISOString(), completed: true }
+];
+
+MockData.forEach((todo) => {
+  const formData = new FormData();
+  formData.append('id', todo.id);
+  formData.append('text', todo.text);
+  formData.append('createdAt', todo.createdAt);
+  formData.append('completed', todo.completed ? 'true' : 'false');
+
+  createTodo(formData);
+});

@@ -1,23 +1,21 @@
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { TodoRecord } from '@/data';
 import { createTodo, deleteTodo, getTodos, updateTodo } from '@/data';
-import type { ActionFunction, LoaderFunction, MetaFunction } from '@remix-run/node';
+import type { ActionFunctionArgs, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { Form, redirect, useFetcher, useLoaderData, useNavigation } from '@remix-run/react';
+import { Form, redirect, useLoaderData, useNavigation } from '@remix-run/react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { Plus } from 'lucide-react';
-import type { FunctionComponent } from 'react';
 
 export const meta: MetaFunction = () => [
   { title: 'Todo List | Remix Todo List' },
@@ -27,19 +25,26 @@ export const meta: MetaFunction = () => [
   }
 ];
 
-export const loader: LoaderFunction = async () => {
+export async function loader() {
   const todos = await getTodos();
   if (!todos) {
     throw new Response('Not Found', { status: 404 });
   }
   return json({ todos });
-};
+}
 
 const INTENT_ADD_TASK = 'add';
 const INTENT_DELETE_TASK = 'delete';
 const INTENT_UPDATE_TASK = 'update';
 
-export const action: ActionFunction = async ({ request }) => {
+const columns: ColumnDef<TodoRecord>[] = [
+  {
+    header: 'Text',
+    accessorKey: 'text'
+  }
+];
+
+export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const intent = formData.get('intent');
 
@@ -58,7 +63,7 @@ export const action: ActionFunction = async ({ request }) => {
       throw new Response(`Invalid intent "${intent}"`, { status: 400 });
     }
   }
-};
+}
 
 const TodoList = () => {
   const { todos } = useLoaderData<typeof loader>();
@@ -79,71 +84,55 @@ const TodoList = () => {
         </Button>
       </Form>
       <ul className="list-inside list-disc">
-        <TableDemo todos={todos} />
+        <TableComponent todos={todos} />
       </ul>
     </div>
   );
 };
 
-const TableDemo = ({ todos }: { todos: TodoRecord[] }) => (
-  <Table>
-    <TableCaption>A list of your recent todos.</TableCaption>
-    <TableHeader>
-      <TableRow>
-        <TableHead>{todos.length} Todo(s)</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      {todos.map((todo) => (
-        <TodoRow todo={todo} key={todo.id} />
-      ))}
-    </TableBody>
-  </Table>
-);
-
-const TodoRow: FunctionComponent<{
-  todo: TodoRecord;
-  key: string;
-}> = ({ todo, key }) => {
-  const fetcher = useFetcher();
-  const completed = fetcher.formData
-    ? fetcher.formData.get('completed') === 'true'
-    : todo.completed;
-  const { id, createdAt, text } = todo;
+const TableComponent = ({ todos }: { todos: TodoRecord[] }) => {
+  const table = useReactTable({
+    columns,
+    data: todos,
+    getCoreRowModel: getCoreRowModel()
+  });
   return (
-    <TableRow key={key} data-state={todo.completed && 'selected'}>
-      <TableCell>
-        <fetcher.Form method="post">
-          <button type="submit" name="intent" value={INTENT_UPDATE_TASK}>
-            <input type="hidden" name="id" value={id} />
-            <input type="hidden" name="completed" value={completed ? 'false' : 'true'} />
-            <Checkbox className="cursor-pointer" checked={completed} />
-          </button>
-        </fetcher.Form>
-      </TableCell>
-      <TableCell>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>{text}</span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{new Date(createdAt).toLocaleString()}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </TableCell>
-
-      <TableCell className="text-right">
-        <Form method="post">
-          <input type="hidden" name="id" value={todo.id} />
-          <Button variant="link" type="submit" name="intent" value={INTENT_DELETE_TASK}>
-            Delete
-          </Button>
-        </Form>
-      </TableCell>
-    </TableRow>
+    <Table>
+      <TableHeader>
+        {table.getHeaderGroups().map((headerGroup) => (
+          <TableRow key={headerGroup.id}>
+            {headerGroup.headers.map((header) => {
+              return (
+                <TableHead key={header.id} colSpan={header.colSpan}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(header.column.columnDef.header, header.getContext())}
+                </TableHead>
+              );
+            })}
+          </TableRow>
+        ))}
+      </TableHeader>
+      <TableBody>
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+              {row.getVisibleCells().map((cell) => (
+                <TableCell key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell colSpan={columns.length} className="h-24 text-center">
+              No results.
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
   );
 };
-
 export default TodoList;

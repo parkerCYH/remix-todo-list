@@ -26,7 +26,7 @@ const fakeTodos = {
   async create(values: TodoMutation): Promise<TodoRecord> {
     const id = values.id || crypto.randomUUID();
     const createdAt = new Date().toISOString();
-    const newContact = { id, createdAt, ...values };
+    const newContact = { ...values, id, createdAt };
     fakeTodos.records[id] = newContact;
     return newContact;
   },

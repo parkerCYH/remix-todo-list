@@ -10,7 +10,7 @@ import {
   navigationMenuTriggerStyle
 } from '@/components/ui/navigation-menu';
 import { cn } from '@/lib/utils';
-import { Link, NavLink } from '@remix-run/react';
+import { NavLink } from '@remix-run/react';
 import * as React from 'react';
 
 export const SiteNav = () => (
@@ -58,9 +58,9 @@ export const NavigationMenuDemo = () => (
         </NavigationMenuContent>
       </NavigationMenuItem>
       <NavigationMenuItem>
-        <Link to="/about">
-          <NavigationMenuLink className={navigationMenuTriggerStyle()}>About</NavigationMenuLink>
-        </Link>
+        <NavLink to="/about" className={navigationMenuTriggerStyle()}>
+          About
+        </NavLink>
       </NavigationMenuItem>
     </NavigationMenuList>
   </NavigationMenu>

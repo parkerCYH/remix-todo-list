@@ -24,7 +24,7 @@ const fakeTodos = {
   },
 
   async create(values: TodoMutation): Promise<TodoRecord> {
-    const id = values.id || Math.random().toString(36).substring(2, 9);
+    const id = values.id || crypto.randomUUID();
     const createdAt = new Date().toISOString();
     const newContact = { id, createdAt, ...values };
     fakeTodos.records[id] = newContact;
@@ -46,12 +46,19 @@ const fakeTodos = {
 };
 
 export const createTodo = async (formData: FormData) => {
+  const id = formData.get('id');
   const text = formData.get('text');
+  const completed = formData.get('completed');
+
   if (typeof text !== 'string') {
     throw new Response('Invalid text', { status: 400 });
   }
 
-  const todo = await fakeTodos.create({ text });
+  const todo = await fakeTodos.create({
+    id: id ? String(id) : undefined,
+    text,
+    completed: completed === 'true'
+  });
   return todo;
 };
 
@@ -76,10 +83,10 @@ export const updateTodo = async (formData: FormData) => {
   const id = formData.get('id');
   const completed = formData.get('completed');
   if (typeof id !== 'string') {
-    throw new Response('Invalid text', { status: 400 });
+    throw new Response('Invalid id', { status: 400 });
   }
   if (typeof completed !== 'string') {
-    throw new Response('Invalid text', { status: 400 });
+    throw new Response('Invalid completed', { status: 400 });
   }
 
   const todo = await fakeTodos.set(id, {

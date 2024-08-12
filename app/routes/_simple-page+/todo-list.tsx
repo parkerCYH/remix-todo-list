@@ -17,7 +17,6 @@ import type { ActionFunction, LoaderFunction, MetaFunction } from '@remix-run/no
 import { json } from '@remix-run/node';
 import { Form, redirect, useFetcher, useLoaderData, useNavigation } from '@remix-run/react';
 import { Plus } from 'lucide-react';
-import type { FunctionComponent } from 'react';
 
 export const meta: MetaFunction = () => [
   { title: 'Todo List | Remix Todo List' },
@@ -101,24 +100,23 @@ const TableDemo = ({ todos }: { todos: TodoRecord[] }) => (
   </Table>
 );
 
-const TodoRow: FunctionComponent<{
-  todo: TodoRecord;
-  key: string;
-}> = ({ todo, key }) => {
+const TodoRow = ({ todo }: { todo: TodoRecord }) => {
   const fetcher = useFetcher();
-  const completed = fetcher.formData
-    ? fetcher.formData.get('completed') === 'true'
-    : todo.completed;
   const { id, createdAt, text } = todo;
   return (
-    <TableRow key={key} data-state={todo.completed && 'selected'}>
+    <TableRow data-state={todo.completed && 'selected'}>
       <TableCell>
         <fetcher.Form method="post">
-          <button type="submit" name="intent" value={INTENT_UPDATE_TASK}>
-            <input type="hidden" name="id" value={id} />
-            <input type="hidden" name="completed" value={completed ? 'false' : 'true'} />
-            <Checkbox className="cursor-pointer" checked={completed} />
-          </button>
+          <input type="hidden" name="id" value={id} />
+          <input type="hidden" name="intent" value={INTENT_UPDATE_TASK} />
+          <input type="hidden" name="completed" value={todo.completed ? 'false' : 'true'} />
+          <Checkbox
+            className="cursor-pointer"
+            checked={todo.completed}
+            onClick={(event) => {
+              fetcher.submit(event.currentTarget.form, { method: 'POST' });
+            }}
+          />
         </fetcher.Form>
       </TableCell>
       <TableCell>
@@ -133,7 +131,6 @@ const TodoRow: FunctionComponent<{
           </Tooltip>
         </TooltipProvider>
       </TableCell>
-
       <TableCell className="text-right">
         <Form method="post">
           <input type="hidden" name="id" value={todo.id} />
